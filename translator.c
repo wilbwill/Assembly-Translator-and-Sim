@@ -45,20 +45,22 @@ main(int argc, char *argv[]) {
 
 
     /*first read through to gather labels in label struct*/
-	int k = 0;
+	int line = 0;
+	int index = 0;
     while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2) ) {
         if(strcmp(label, "") != 0) {
-        	strcpy(labels[k].innerLabel, label);
-        	labels[k].address = k;
-        	++k;
+        	strcpy(labels[index].innerLabel, label);
+        	labels[index].address = line;
+        	++line;
+        	++index;
         }
+        else ++line;
     }
 
     /*Check duplicates in labels*/
     char labCheck[7];
 	int cmp = -2;
 	unsigned labNum = 0;
-
 	for(int i = 0; labels[i].address != -1; ++i) {
 		strcpy(labCheck, labels[i].innerLabel);
 		for(int j = i + 1; labels[j].address != -1; ++j) {
@@ -78,6 +80,7 @@ main(int argc, char *argv[]) {
     /*find the correct opcode for each line and do the
       appropriate operations*/
     int bitString = 0;
+    int lineNum = 0;
     while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2) ) {
     	bitString = 0;
     	if (!strcmp(opcode, "add")) {
@@ -111,10 +114,15 @@ main(int argc, char *argv[]) {
    		else if (!strcmp(opcode, "noop")) {
         	bitString |= 0b111 << 22;
    		}
+   		else if (!strcmp(opcode, ".fill")) {
+   			
+   		}
    		else {
    			exit(1);
    		}
 
+
+   		//check beq arg2
    		if(!strcmp(opcode, "beq")) {
         	bitString |= atoi(arg0) << 19;
         	bitString |= atoi(arg1) << 16;
@@ -125,18 +133,67 @@ main(int argc, char *argv[]) {
    			}
    			else {
    				//TODO find address of label
-  
-   				// beq subtract 1 from difference between two addresses
+   				int neededAddress = -1;
+   				for(int i = 0; labels[i].address != -1; ++i) {
+   					if(strcmp(labels[i].innerLabel, arg2) == 0) {
+   						neededAddress = labels[i].address;
+   						break;
+   					}
+   				}
 
-   				//lw and sw use address line
-
-   				//&= the bit string and the offsetfield for 
-   				//negative numbers
+  				int mask = 65535;
+   				int offset = neededAddress - lineNum - 1;
+   				offset &= mask;
+   				bitString |= offset;
    			}
    		}
 
 
+   		//finsih for lw and sw
+   		if(!strcmp(opcode, "lw") || !strcmp(opcode, "sw")) {
+        	bitString |= atoi(arg0) << 19;
+        	bitString |= atoi(arg1) << 16;
+
+        	//TODO check range of twos complement
+   			if(isNumber(arg2)) {
+   				bitString |= atoi(arg2);
+   			}
+   			else {
+   				//TODO find address of label
+   				int neededAddress = -1;
+   				for(int i = 0; labels[i].address != -1; ++i) {
+   					if(strcmp(labels[i].innerLabel, arg2) == 0) {
+   						neededAddress = labels[i].address;
+   						break;
+   					}
+   				}
+
+  				int mask = 65535;
+   				int offset = neededAddress;
+   				offset &= mask;
+   				bitString |= offset;
+   			}
+   		}
+
+   		if(!strcmp(opcode, ".fill")) {
+   			if(isNumber(arg0)) {
+   				bitString |= atoi(arg0);
+   			}
+   			else {
+   				int neededAddress = -1;
+   				for(int i = 0; labels[i].address != -1; ++i) {
+   					if(strcmp(labels[i].innerLabel, arg0) == 0) {
+
+   						bitString |= labels[i].address;
+   						break;
+   					}
+   				}
+
+   			}
+   		}
+
    		printf("%d\n", bitString);
+   		++lineNum;
     }
 
     return(0);
