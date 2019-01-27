@@ -140,9 +140,17 @@ main(int argc, char *argv[]) {
    						break;
    					}
    				}
+   				if(neededAddress == -1) {
+   					printf("%s\n", "Error: undefined label");
+   					exit(1);
+   				}
 
   				int mask = 65535;
    				int offset = neededAddress - lineNum - 1;
+   				if(offset < -32768 || offset > 32767) {
+   					printf("%s\n", "Error, offset out of bounds");
+   					exit(1);
+   				}
    				offset &= mask;
    				bitString |= offset;
    			}
@@ -167,9 +175,17 @@ main(int argc, char *argv[]) {
    						break;
    					}
    				}
+   				if(neededAddress == -1) {
+   					printf("%s\n", "Error: undefined label");
+   					exit(1);
+   				}
 
   				int mask = 65535;
    				int offset = neededAddress;
+   				if(offset < -32768 || offset > 32767) {
+   					printf("%s\n", "Error, offset out of bounds");
+   					exit(1);
+   				}
    				offset &= mask;
    				bitString |= offset;
    			}
