@@ -6,8 +6,8 @@
 #define MAXLINELENGTH 1000
 
 struct Labels {
+	int address;
 	char innerLabel[7];
-	int address = -1;
 };
 
 int readAndParse(FILE *, char *, char *, char *, char *, char *);
@@ -41,14 +41,23 @@ main(int argc, char *argv[]) {
         exit(1);
     }
 
-    Labels labels[256];
+    struct Labels labels[256];
+
+    for(int i = 0; i < 256; ++i){
+    	labels[i].address = -1;
+    }
 
 
+//TODO check length of labels, make sure they are exactly 6
     /*first read through to gather labels in label struct*/
 	int line = 0;
 	int index = 0;
     while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2) ) {
         if(strcmp(label, "") != 0) {
+        	if(strlen(label) > 6) {
+        		printf("%s\n", "Error: label more than 6 characters");
+        		exit(1);
+        	}
         	strcpy(labels[index].innerLabel, label);
         	labels[index].address = line;
         	++line;
@@ -67,7 +76,7 @@ main(int argc, char *argv[]) {
 			cmp = strcmp(labCheck, labels[j].innerLabel);
 			if(cmp == 0) ++labNum;
 			if(labNum >= 1) {
-				printf("%s\n", "Error");
+				printf("%s\n", "Error: duplicate label");
 				exit(1);
 			} 
 		}
@@ -84,26 +93,62 @@ main(int argc, char *argv[]) {
     while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2) ) {
     	bitString = 0;
     	if (!strcmp(opcode, "add")) {
+    		if(atoi(arg0) > 7 || atoi(arg1) > 7 || atoi(arg2) > 7) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
+    		if(atoi(arg0) < 0 || atoi(arg1) < 0 || atoi(arg2) < 0) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
         	bitString |= (atoi(arg0) << 19);
         	bitString |= (atoi(arg1) << 16);
         	bitString |= atoi(arg2);
    		} 
    		else if (!strcmp(opcode, "nor")) {
+   			if(atoi(arg0) > 7 || atoi(arg1) > 7 || atoi(arg2) > 7) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
+    		if(atoi(arg0) < 0 || atoi(arg1) < 0 || atoi(arg2) < 0) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
         	bitString |= 0b001 << 22;
         	bitString |= atoi(arg0) << 19;
         	bitString |= atoi(arg1) << 16;
         	bitString |= atoi(arg2);
    		} 
    		else if (!strcmp(opcode, "lw")) {
+   			if(atoi(arg0) > 7 || atoi(arg1) > 7) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
+    		if(atoi(arg0) < 0 || atoi(arg1) < 0) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
         	bitString |= 0b010 << 22;
    		} 
    		else if (!strcmp(opcode, "sw")) {
+   			if(atoi(arg0) > 7 || atoi(arg1) > 7) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
+    		if(atoi(arg0) < 0 || atoi(arg1) < 0) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
         	bitString |= 0b011 << 22;
    		} 
    		else if (!strcmp(opcode, "beq")) {
+   			if(atoi(arg0) > 7 || atoi(arg1) > 7) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
+    		if(atoi(arg0) < 0 || atoi(arg1) < 0) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
         	bitString |= 0b100 << 22;
    		} 
    		else if (!strcmp(opcode, "jalr")) {
+   			if(atoi(arg0) > 7 || atoi(arg1) > 7) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
+    		if(atoi(arg0) < 0 || atoi(arg1) < 0) {
+    			printf("%s\n", "Error: Invalid register");
+    		}
         	bitString |= 0b101 << 22;
         	bitString |= atoi(arg0) << 19;
         	bitString |= atoi(arg1) << 16;
@@ -118,6 +163,7 @@ main(int argc, char *argv[]) {
    			
    		}
    		else {
+   			printf("%s\n", "Error: Undefined opcode");
    			exit(1);
    		}
 
@@ -129,7 +175,17 @@ main(int argc, char *argv[]) {
 
         	//TODO check range of twos complement
    			if(isNumber(arg2)) {
-   				bitString |= atoi(arg2);
+   				if(atoi(arg2) < 0) {
+   					int mask = 65535;
+   					int offset = atoi(arg2);
+   					if(offset < -32768 || offset > 32767) {
+   						printf("%s\n", "Error: offset out of bounds");
+   						exit(1);
+   					}
+   					offset &= mask;
+   					bitString |= offset;
+   				}
+   				else bitString |= atoi(arg2);
    			}
    			else {
    				//TODO find address of label
@@ -148,7 +204,7 @@ main(int argc, char *argv[]) {
   				int mask = 65535;
    				int offset = neededAddress - lineNum - 1;
    				if(offset < -32768 || offset > 32767) {
-   					printf("%s\n", "Error, offset out of bounds");
+   					printf("%s\n", "Error: offset out of bounds");
    					exit(1);
    				}
    				offset &= mask;
@@ -164,7 +220,17 @@ main(int argc, char *argv[]) {
 
         	//TODO check range of twos complement
    			if(isNumber(arg2)) {
-   				bitString |= atoi(arg2);
+   				if(atoi(arg2) < 0) {
+   					int mask = 65535;
+   					int offset = atoi(arg2);
+   					if(offset < -32768 || offset > 32767) {
+   						printf("%s\n", "Error: offset out of bounds");
+   						exit(1);
+   					}
+   					offset &= mask;
+   					bitString |= offset;
+   				}
+   				else bitString |= atoi(arg2);
    			}
    			else {
    				//TODO find address of label
@@ -183,7 +249,7 @@ main(int argc, char *argv[]) {
   				int mask = 65535;
    				int offset = neededAddress;
    				if(offset < -32768 || offset > 32767) {
-   					printf("%s\n", "Error, offset out of bounds");
+   					printf("%s\n", "Error: offset out of bounds");
    					exit(1);
    				}
    				offset &= mask;
@@ -208,7 +274,7 @@ main(int argc, char *argv[]) {
    			}
    		}
 
-   		printf("%d\n", bitString);
+   		fprintf(outFilePtr, "%d\n", bitString);
    		++lineNum;
     }
 
