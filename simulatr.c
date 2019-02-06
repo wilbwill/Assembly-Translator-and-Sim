@@ -127,6 +127,7 @@ int main(int argc, char *argv[]) {
     			state.pc = state.pc + offset;
     			
     		}
+    		printf("%s\n", "Beq done");
     	}
     	//jalr
     	else if(op == 5) {
@@ -139,7 +140,6 @@ int main(int argc, char *argv[]) {
 
     		//branch to address in regA
     		state.pc = state.reg[regA];
-
     	}
     	//noop
     	else if(op == 7) {
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
     	}
 
     	//Get next opcode and increment pc
-    	state.pc++;
+    	if(op != 5) state.pc++;
     	currentOp = state.mem[state.pc];
     	op = getOpcode(currentOp);
 
@@ -169,6 +169,7 @@ int main(int argc, char *argv[]) {
 	printf("%d ", count);
 	printf("%s\n", "instructions executed");
 	printf("%s\n", "final state of machine: ");
+
 
     ++state.pc;
     printState(&state);
