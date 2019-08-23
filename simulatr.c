@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+
     /* read in the entire machine-code file into memory */
     for (state.numMemory = 0; fgets(line, MAXLINELENGTH, filePtr) != NULL;
             state.numMemory++) {
@@ -47,6 +48,7 @@ int main(int argc, char *argv[]) {
         }
         printf("memory[%d]=%d\n", state.numMemory, state.mem[state.numMemory]);
     }
+    //state.numMemory += 100;
     printf("%s\n", "");
 
     //Set all registers to 0
