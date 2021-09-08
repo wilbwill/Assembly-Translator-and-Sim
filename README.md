@@ -1,4 +1,4 @@
-# AssemblyTranslatorSimulator
+# AssemblyToMachineCode
 Program that translates assembly code to machine code.
 It has another program that can simulate machine code in a register system.
 
